@@ -1,23 +1,25 @@
 $(document).ready(() => {
-    let languageUser = 'he-IL'
-    if ($('#lang').text().trim() === 'עברית'){
-        languageUser = 'he-IL'
-    }else{
-        languageUser = 'en-US'
-    }
+    let languageUser = 'he-IL'; // Default language
+    const resultDiv = $('#result');
+    const toggleButton = $('#toggle-recognition');
+    let silenceTimeout; // Timeout variable for detecting silence
 
+    // Function to update the languageUser based on the selected option
+    const updateLanguage = () => {
+        const selectedLang = $('#lang').val();
+        languageUser = selectedLang === 'עברית' ? 'he-IL' : 'en-US';
+        recognition.lang = languageUser; // Update recognition language
+    };
+
+    $('#lang').change(updateLanguage); // Update language on change
 
     function speakText(text) {
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = languageUser;
+            utterance.lang = languageUser; // Set the language for speech synthesis
             window.speechSynthesis.speak(utterance);
         }
     }
-
-    const resultDiv = $('#result');
-    const toggleButton = $('#toggle-recognition');
-    let silenceTimeout; // Timeout variable for detecting silence
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -26,7 +28,7 @@ $(document).ready(() => {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = languageUser; // Set the language
+    recognition.lang = languageUser; // Set the language for speech recognition
     recognition.interimResults = false;
     recognition.continuous = true; // Keep listening continuously
 
@@ -85,7 +87,6 @@ $(document).ready(() => {
             resultDiv.append("<br>An error occurred while fetching the response.");
         }
     };
-
 
     recognition.onerror = (event) => {
         if (event.error !== "no-speech") {

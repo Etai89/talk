@@ -65,7 +65,7 @@ $(document).ready(() => {
 
         // Only process the result if the volume is above the threshold
         const confidence = event.results[event.resultIndex][0].confidence; // This value usually ranges between 0 and 1
-        if (confidence < 0.5) { // Assuming a 0.5 threshold, adjust if needed
+        if (confidence < 0.3) { // Assuming a 0.5 threshold, adjust if needed
             return; // Ignore low-confidence results
         }
 

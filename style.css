@@ -10,12 +10,26 @@ body{
 
     width: 100%;
 }
-
+#btns{
+    display: flex;
+    justify-content: center;
+}
 #toggle-recognition{
     border: 1px solid rgb(231, 144, 144);
     font-size: 22px;
     width: 150px;
     height: 150px;
+    border-radius: 50%;
+    margin-top: 20px;
+    padding: 20px;
+    background-color: lightgreen;
+    box-shadow: 1px 1px 20px rgba(22, 22, 75, 0.2);
+}
+#stop-tts, #deleteConversation{
+    border: 1px solid rgb(231, 144, 144);
+    font-size: 20px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     margin-top: 20px;
     padding: 20px;

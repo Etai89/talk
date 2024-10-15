@@ -2,8 +2,16 @@ $(document).ready(() => {
     let languageUser = 'he-IL'; // Default language
     const resultDiv = $('#result');
     const toggleButton = $('#toggle-recognition');
+    const stopTTSButton = $('#stop-tts'); // New Stop Talking button
     let silenceTimeout; // Timeout variable for detecting silence
 
+    // Load conversation history from local storage
+    let conversationHistory = JSON.parse(localStorage.getItem('conversationHistory')) || [];
+
+
+    $('#deleteConversation').click(()=>{
+        localStorage.clear()
+    })
     // Function to update the languageUser based on the selected option
     const updateLanguage = () => {
         const selectedLang = $('#lang').val();
@@ -17,7 +25,14 @@ $(document).ready(() => {
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = languageUser; // Set the language for speech synthesis
+
+            // Event listeners to manage the stop functionality
+            utterance.onend = () => {
+                stopTTSButton.prop('disabled', true); // Disable the stop button after speaking
+            };
+
             window.speechSynthesis.speak(utterance);
+            stopTTSButton.prop('disabled', false); // Enable the stop button
         }
     }
 
@@ -47,7 +62,17 @@ $(document).ready(() => {
 
     recognition.onresult = async (event) => {
         const speechResult = event.results[event.resultIndex][0].transcript;
-        resultDiv.text(`אני: ${speechResult}`);
+
+        // Only process the result if the volume is above the threshold
+        const confidence = event.results[event.resultIndex][0].confidence; // This value usually ranges between 0 and 1
+        if (confidence < 0.5) { // Assuming a 0.5 threshold, adjust if needed
+            return; // Ignore low-confidence results
+        }
+
+        resultDiv.append(`<br>אני: ${speechResult}`); // Append user input to resultDiv
+
+        // Append the user's input to conversation history
+        conversationHistory.push(`אני: ${speechResult}`);
 
         // Reset the timeout for silence detection
         clearTimeout(silenceTimeout);
@@ -61,11 +86,14 @@ $(document).ready(() => {
 
         const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${TOKEN}`;
 
+        // Combine previous conversation with the new speech input
+        const combinedHistory = conversationHistory.join('\n');
+
         const requestData = {
             contents: [
                 {
                     parts: [
-                        { text: speechResult }
+                        { text: combinedHistory } // Send the entire conversation history
                     ]
                 }
             ]
@@ -81,6 +109,12 @@ $(document).ready(() => {
             // Clean the generated content by removing asterisks
             const generatedContent = response.candidates[0].content.parts[0].text.replace(/\*\*/g, '').trim();
             resultDiv.append(`<br>הוא: ${generatedContent}`);
+
+            // Append the AI's response to conversation history
+            conversationHistory.push(`הוא: ${generatedContent}`);
+            localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory)); // Store in local storage
+
+            // Speak the generated content
             speakText(generatedContent);
         } catch (error) {
             console.error("Error communicating with Gemini AI Studio:", error);
@@ -98,4 +132,17 @@ $(document).ready(() => {
         // Optionally, handle any end of recognition logic here
         // but it won't be used in this version
     };
+    
+    // Load conversation history on page load
+    if (conversationHistory.length > 0) {
+        resultDiv.html(conversationHistory.join("<br>")); // Display the conversation history in resultDiv
+    }
+
+    // Stop TTS button functionality
+    stopTTSButton.on('click', () => {
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel(); // Stop any ongoing speech
+            stopTTSButton.prop('disabled', true); // Disable the stop button
+        }
+    });
 });

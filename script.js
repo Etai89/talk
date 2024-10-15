@@ -82,7 +82,7 @@ $(document).ready(() => {
             recognition.stop();
             toggleButton.text("התחל לדבר");
             resultDiv.append("<br>Listening stopped due to inactivity.");
-        }, 60000); // Stop listening after 60 seconds (1 minute) of silence
+        }, 1000); // Stop listening after 60 seconds (1 minute) of silence
 
         const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${TOKEN}`;
 

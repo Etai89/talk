@@ -65,7 +65,7 @@ $(document).ready(() => {
 
         // Only process the result if the volume is above the threshold
         const confidence = event.results[event.resultIndex][0].confidence; // This value usually ranges between 0 and 1
-        if (confidence < 0.3) { // Assuming a 0.5 threshold, adjust if needed
+        if (confidence < 0.2) { // Assuming a 0.5 threshold, adjust if needed
             return; // Ignore low-confidence results
         }
 
@@ -82,7 +82,7 @@ $(document).ready(() => {
             recognition.stop();
             toggleButton.text("התחל לדבר");
             resultDiv.append("<br>Listening stopped due to inactivity.");
-        }, 1000); // Stop listening after 60 seconds (1 minute) of silence
+        }, 2000); // Stop listening after 60 seconds (1 minute) of silence
 
         const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${TOKEN}`;
 

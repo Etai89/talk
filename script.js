@@ -1,6 +1,6 @@
 $(document).ready(() => {
     let languageUser = 'he-IL'
-    if ($('#lang').val() === 'עברית'){
+    if ($('#lang').text().trim() === 'עברית'){
         languageUser = 'he-IL'
     }else{
         languageUser = 'en-US'

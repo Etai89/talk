@@ -13,7 +13,7 @@ $(document).ready(() => {
     let conversationHistory = JSON.parse(localStorage.getItem('conversationHistory')) || [];
 
     silentModeToggle.text(silentMode ? 'Silent Mode: ON' : 'Silent Mode: OFF');
-
+    $('#settingsArea').hide();
     $('#settingsBtn').click(() => $('#settingsArea').show());
 
     $('#save').click(() => {

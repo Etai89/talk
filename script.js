@@ -1,3 +1,4 @@
+
 $(document).ready(() => {
     let languageUser = localStorage.getItem('lang') || 'en-US';
     const resultDiv = $('#result');
@@ -7,15 +8,13 @@ $(document).ready(() => {
     const silentModeToggle = $('#silent-mode-toggle');
     const textInputField = $('#text-input');
     let silenceTimeout;
-    
+
     let silentMode = JSON.parse(localStorage.getItem('silentMode')) || false;
     let conversationHistory = JSON.parse(localStorage.getItem('conversationHistory')) || [];
 
     silentModeToggle.text(silentMode ? 'Silent Mode: ON' : 'Silent Mode: OFF');
 
     $('#settingsBtn').click(() => $('#settingsArea').show());
-
-    $('#settingsArea').hide();
 
     $('#save').click(() => {
         const newToken = $('#apiToken').val();
@@ -114,29 +113,24 @@ $(document).ready(() => {
         toggleButton.text(languageUser === 'en-US' ? "Talk" : "תדבר");
     });
 
-    recognition.onresult = async (event) => {
-        const speechResult = event.results[event.resultIndex][0].transcript;
-
-        // Only process the result if the volume is above the threshold
-        const confidence = event.results[event.resultIndex][0].confidence; // This value usually ranges between 0 and 1
-        if (confidence < 0.2) { // Assuming a 0.5 threshold, adjust if needed
-            return; // Ignore low-confidence results
+    textInputButton.click(() => {
+        const textPrompt = textInputField.val();
+        if (textPrompt) {
+            processPrompt(textPrompt);
+            textInputField.val(''); // Clear input field after sending prompt
         }
+    });
 
-        resultDiv.append(`<br>אני: ${speechResult}`); // Append user input to resultDiv
+    async function processPrompt(userInput) {
+        resultDiv.append(`<br><strong>אני:</strong> ${userInput}`);
+        conversationHistory.push(`אני: ${userInput}`);
+        localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
 
-        // Append the user's input to conversation history
-        conversationHistory.push(`אני: ${speechResult}`);
-
-        // Reset the timeout for silence detection
-        clearTimeout(silenceTimeout);
-
-        // Set a longer timeout duration (e.g., 1 minute)
-        silenceTimeout = setTimeout(() => {
-            recognition.stop();
-            toggleButton.text("התחל לדבר");
-            resultDiv.append("<br>Listening stopped due to inactivity.");
-        }, 2000);
+        if (!TOKEN) {
+            console.error("API Token is not available.");
+            resultDiv.append("<br>API Token is missing.");
+            return;
+        }
 
         const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${TOKEN}`;
         const requestData = { contents: [{ parts: [{ text: conversationHistory.join('\n') }] }] };

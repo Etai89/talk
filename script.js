@@ -112,24 +112,29 @@ $(document).ready(() => {
         toggleButton.text(languageUser === 'en-US' ? "Talk" : "תדבר");
     });
 
-    textInputButton.click(() => {
-        const textPrompt = textInputField.val();
-        if (textPrompt) {
-            processPrompt(textPrompt);
-            textInputField.val(''); // Clear input field after sending prompt
-        }
-    });
+    recognition.onresult = async (event) => {
+        const speechResult = event.results[event.resultIndex][0].transcript;
 
-    async function processPrompt(userInput) {
-        resultDiv.append(`<br><strong>אני:</strong> ${userInput}`);
-        conversationHistory.push(`אני: ${userInput}`);
-        localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
-
-        if (!TOKEN) {
-            console.error("API Token is not available.");
-            resultDiv.append("<br>API Token is missing.");
-            return;
+        // Only process the result if the volume is above the threshold
+        const confidence = event.results[event.resultIndex][0].confidence; // This value usually ranges between 0 and 1
+        if (confidence < 0.5) { // Assuming a 0.5 threshold, adjust if needed
+            return; // Ignore low-confidence results
         }
+
+        resultDiv.append(`<br>אני: ${speechResult}`); // Append user input to resultDiv
+
+        // Append the user's input to conversation history
+        conversationHistory.push(`אני: ${speechResult}`);
+
+        // Reset the timeout for silence detection
+        clearTimeout(silenceTimeout);
+
+        // Set a longer timeout duration (e.g., 1 minute)
+        silenceTimeout = setTimeout(() => {
+            recognition.stop();
+            toggleButton.text("התחל לדבר");
+            resultDiv.append("<br>Listening stopped due to inactivity.");
+        }, 60000); // Stop listening after 60 seconds (1 minute) of silence
 
         const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${TOKEN}`;
         const requestData = { contents: [{ parts: [{ text: conversationHistory.join('\n') }] }] };

@@ -1,6 +1,50 @@
 body{
-    background-color: cornflowerblue;
+    background-color: rgb(0, 0, 0);
 }
+#first{
+    display: flex;
+    justify-items: center;
+    justify-content: center;
+}
+#settingsArea{
+    border: 1px solid black;
+    display: grid;
+    justify-items: center;
+    justify-content: center;
+    margin: 10px;
+}
+#silent-mode-toggle{
+    text-align: center;
+    width: 200px;
+    color: white;
+    background-color: rgb(60, 60, 60);
+    height: 30px;
+    border-radius: 10px;
+    margin: 10px;
+}
+#apiToken, #text-input{
+    text-align: center;
+    width: 330px;
+    color: white;
+    background-color: rgb(60, 60, 60);
+    height: 30px;
+    border-radius: 10px;
+}
+#text-input{
+    margin: 10px;
+    height: 100px;
+    font-size: 18px;
+}
+#save, #settingsBtn, #text-input-btn{
+    text-align: center;
+    width: 100px;
+    color: white;
+    background-color: rgb(60, 60, 60);
+    height: 30px;
+    border-radius: 10px;   
+    margin: 10px;
+}
+
 .main{
     display: grid;
     justify-content: center;
@@ -13,39 +57,43 @@ body{
 #btns{
     display: flex;
     justify-content: center;
+    gap: 20px;
+
 }
 #toggle-recognition{
-    border: 1px solid rgb(231, 144, 144);
+    color: white;
+    border: 1px solid rgb(144, 144, 144);
     font-size: 22px;
     width: 150px;
     height: 150px;
-    border-radius: 50%;
+    border-radius: 10px;
     margin-top: 20px;
     padding: 20px;
-    background-color: lightgreen;
+    background-color: rgba(60, 60, 60, 0.6);
     box-shadow: 1px 1px 20px rgba(22, 22, 75, 0.2);
 }
 #stop-tts, #deleteConversation{
-    border: 1px solid rgb(231, 144, 144);
+    color: white;
+    border: 1px solid rgb(144, 144, 144);
     font-size: 20px;
     width: 100px;
     height: 100px;
-    border-radius: 50%;
+    border-radius: 10px;
     margin-top: 20px;
     padding: 20px;
-    background-color: lightgreen;
+    background-color: rgba(60, 60, 60, 0.6);
     box-shadow: 1px 1px 20px rgba(22, 22, 75, 0.2);
 }
 #result{
-    overflow-y: hidden;
+    overflow-y: auto;
     color: white;
     font-size: 18px;
     background-color: rgb(77, 77, 77);
     margin-top: 15px;
     padding: 20px;
-    width: 350px;
-    height: 500px;
-    border: 1px solid rgb(231, 144, 144);
+    width: 330px;
+    height: 300px;
+    border: 1px solid rgb(144, 144, 144);
     border-radius: 10px;
     box-shadow: 1px 1px 20px rgba(22, 22, 75, 0.1);
 
@@ -56,8 +104,8 @@ body{
     border-radius: 10px;
     width: 100px;
     height: 30px;
+    border: 1px solid rgb(144, 144, 144);
     text-align: center;
-    background-color: gray;
+    background-color: rgb(77, 77, 77);
     color: white;
-
 }

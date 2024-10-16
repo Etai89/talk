@@ -12,6 +12,20 @@
 </head>
 
 <body>
+    <div id="first">
+        <button id="settingsBtn">הגדרות</button>
+        
+        
+    </div>
+    <div id="settingsArea">
+        <button id="silent-mode-toggle">Silent Mode: OFF</button>
+        <input type="text" name="apiToken" id="apiToken" placeholder="Paste your API TOKEN">
+        <select id="lang">
+            <option value="עברית">עברית</option>
+            <option value="English">English</option>
+        </select>
+        <button id="save">שמור</button>
+    </div>
     <div id="btns">
         <button id="stop-tts" disabled>תפסיק לדבר</button>
         <button id="deleteConversation">מחק שיחה</button>
@@ -19,12 +33,9 @@
     <div class="main">
         <button id="toggle-recognition">התחל לדבר</button>
 
+        <textarea type="text" id="text-input" placeholder="Type your prompt here"></textarea>
+        <button id="text-input-btn">Send Prompt</button>
 
-
-        <select id="lang">
-            <option value="עברית">עברית</option>
-            <option value="English">English</option>
-        </select>
         <div id="result"></div>
     </div>
 </body>

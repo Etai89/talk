@@ -1,38 +1,86 @@
 $(document).ready(() => {
-    let languageUser = 'he-IL'; // Default language
+    let languageUser = localStorage.getItem('lang') || 'en-US';
     const resultDiv = $('#result');
     const toggleButton = $('#toggle-recognition');
-    const stopTTSButton = $('#stop-tts'); // New Stop Talking button
-    let silenceTimeout; // Timeout variable for detecting silence
-
-    // Load conversation history from local storage
+    const stopTTSButton = $('#stop-tts');
+    const textInputButton = $('#text-input-btn');
+    const silentModeToggle = $('#silent-mode-toggle');
+    const textInputField = $('#text-input');
+    let silenceTimeout;
+    
+    let silentMode = JSON.parse(localStorage.getItem('silentMode')) || false;
     let conversationHistory = JSON.parse(localStorage.getItem('conversationHistory')) || [];
 
+    silentModeToggle.text(silentMode ? 'Silent Mode: ON' : 'Silent Mode: OFF');
 
-    $('#deleteConversation').click(()=>{
-        localStorage.clear()
-    })
-    // Function to update the languageUser based on the selected option
+    $('#settingsBtn').click(() => $('#settingsArea').show());
+
+    $('#save').click(() => {
+        const newToken = $('#apiToken').val();
+        localStorage.setItem('apiToken', JSON.stringify(newToken));
+        $('#settingsArea').hide();
+    });
+
+    $('#deleteConversation').click(() => {
+        localStorage.removeItem('conversationHistory');
+        conversationHistory = [];
+        resultDiv.empty();
+    });
+
+    $('#silent-mode-toggle').click(() => {
+        silentMode = !silentMode;
+        localStorage.setItem('silentMode', silentMode);
+        updateSilentModeText();
+    });
+
+    const updateSilentModeText = () => {
+        const silentText = languageUser === 'he-IL' ? 'מצב שקט: ' : 'Silent Mode: ';
+        silentModeToggle.text(silentText + (silentMode ? 'ON' : 'OFF'));
+    };
+
     const updateLanguage = () => {
         const selectedLang = $('#lang').val();
         languageUser = selectedLang === 'עברית' ? 'he-IL' : 'en-US';
-        recognition.lang = languageUser; // Update recognition language
+        localStorage.setItem('lang', selectedLang);
+        updateButtonText();
+        updateSilentModeText();
+        recognition.lang = languageUser;
+
+        if (recognition.running) {
+            recognition.stop();
+            recognition.start();
+        }
     };
 
-    $('#lang').change(updateLanguage); // Update language on change
+    const updateButtonText = () => {
+        if (languageUser === 'he-IL') {
+            $('#deleteConversation').text('מחק שיחה');
+            $('#stop-tts').text('עצור');
+            $('#save').text('שמור');
+            $('#settingsBtn').text('הגדרות');
+            toggleButton.text('דבר');
+            textInputButton.text('שלח שאלה');
+        } else {
+            $('#deleteConversation').text('Delete chat');
+            $('#stop-tts').text('Stop');
+            $('#save').text('Save');
+            $('#settingsBtn').text('Settings');
+            toggleButton.text('Talk');
+            textInputButton.text('Send Prompt');
+        }
+    };
+
+    $('#lang').change(updateLanguage);
+    updateButtonText();
+    updateSilentModeText();
 
     function speakText(text) {
-        if ('speechSynthesis' in window) {
+        if ('speechSynthesis' in window && !silentMode) {
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = languageUser; // Set the language for speech synthesis
-
-            // Event listeners to manage the stop functionality
-            utterance.onend = () => {
-                stopTTSButton.prop('disabled', true); // Disable the stop button after speaking
-            };
-
+            utterance.lang = languageUser;
+            utterance.onend = () => stopTTSButton.prop('disabled', true);
             window.speechSynthesis.speak(utterance);
-            stopTTSButton.prop('disabled', false); // Enable the stop button
+            stopTTSButton.prop('disabled', false);
         }
     }
 
@@ -43,61 +91,48 @@ $(document).ready(() => {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = languageUser; // Set the language for speech recognition
+    recognition.lang = languageUser;
     recognition.interimResults = false;
-    recognition.continuous = true; // Keep listening continuously
+    recognition.continuous = true;
 
-    const TOKEN = 'AIzaSyB4Hka0BMKYNd5tiMCJo5G3qB13oDO40d8';
+    const savedToken = JSON.parse(localStorage.getItem('apiToken'));
+    if (savedToken) {
+        $('#apiToken').val(savedToken);
+    }
+    const TOKEN = savedToken;
 
     toggleButton.mousedown(() => {
-        resultDiv.text("מקשיב לך...");
+        resultDiv.text(languageUser === 'en-US' ? "Listening..." : "מקשיב..");
         recognition.start();
-        toggleButton.text("תפסיק לדבר");
+        toggleButton.text(languageUser === 'en-US' ? "Stop Talking" : "תפסיק לדבר...");
     });
 
     toggleButton.mouseup(() => {
         recognition.stop();
-        toggleButton.text("התחל לדבר");
+        toggleButton.text(languageUser === 'en-US' ? "Talk" : "תדבר");
     });
 
-    recognition.onresult = async (event) => {
-        const speechResult = event.results[event.resultIndex][0].transcript;
+    textInputButton.click(() => {
+        const textPrompt = textInputField.val();
+        if (textPrompt) {
+            processPrompt(textPrompt);
+            textInputField.val(''); // Clear input field after sending prompt
+        }
+    });
 
-        // Only process the result if the volume is above the threshold
-        const confidence = event.results[event.resultIndex][0].confidence; // This value usually ranges between 0 and 1
-        if (confidence < 0.5) { // Assuming a 0.5 threshold, adjust if needed
-            return; // Ignore low-confidence results
+    async function processPrompt(userInput) {
+        resultDiv.append(`<br><strong>אני:</strong> ${userInput}`);
+        conversationHistory.push(`אני: ${userInput}`);
+        localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
+
+        if (!TOKEN) {
+            console.error("API Token is not available.");
+            resultDiv.append("<br>API Token is missing.");
+            return;
         }
 
-        resultDiv.append(`<br>אני: ${speechResult}`); // Append user input to resultDiv
-
-        // Append the user's input to conversation history
-        conversationHistory.push(`אני: ${speechResult}`);
-
-        // Reset the timeout for silence detection
-        clearTimeout(silenceTimeout);
-
-        // Set a longer timeout duration (e.g., 1 minute)
-        silenceTimeout = setTimeout(() => {
-            recognition.stop();
-            toggleButton.text("התחל לדבר");
-            resultDiv.append("<br>Listening stopped due to inactivity.");
-        }, 60000); // Stop listening after 60 seconds (1 minute) of silence
-
         const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${TOKEN}`;
-
-        // Combine previous conversation with the new speech input
-        const combinedHistory = conversationHistory.join('\n');
-
-        const requestData = {
-            contents: [
-                {
-                    parts: [
-                        { text: combinedHistory } // Send the entire conversation history
-                    ]
-                }
-            ]
-        };
+        const requestData = { contents: [{ parts: [{ text: conversationHistory.join('\n') }] }] };
 
         try {
             const response = await $.ajax({
@@ -106,20 +141,21 @@ $(document).ready(() => {
                 contentType: "application/json",
                 data: JSON.stringify(requestData)
             });
-            // Clean the generated content by removing asterisks
             const generatedContent = response.candidates[0].content.parts[0].text.replace(/\*\*/g, '').trim();
             resultDiv.append(`<br>הוא: ${generatedContent}`);
-
-            // Append the AI's response to conversation history
             conversationHistory.push(`הוא: ${generatedContent}`);
-            localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory)); // Store in local storage
-
-            // Speak the generated content
+            localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
             speakText(generatedContent);
         } catch (error) {
             console.error("Error communicating with Gemini AI Studio:", error);
             resultDiv.append("<br>An error occurred while fetching the response.");
         }
+    }
+
+    recognition.onresult = (event) => {
+        const speechResult = event.results[event.resultIndex][0].transcript;
+        if (event.results[event.resultIndex][0].confidence < 0.2) return;
+        processPrompt(speechResult);
     };
 
     recognition.onerror = (event) => {
@@ -128,21 +164,14 @@ $(document).ready(() => {
         }
     };
 
-    recognition.onend = () => {
-        // Optionally, handle any end of recognition logic here
-        // but it won't be used in this version
-    };
-    
-    // Load conversation history on page load
     if (conversationHistory.length > 0) {
-        resultDiv.html(conversationHistory.join("<br>")); // Display the conversation history in resultDiv
+        resultDiv.html(conversationHistory.join("<br>"));
     }
 
-    // Stop TTS button functionality
     stopTTSButton.on('click', () => {
         if (window.speechSynthesis.speaking) {
-            window.speechSynthesis.cancel(); // Stop any ongoing speech
-            stopTTSButton.prop('disabled', true); // Disable the stop button
+            window.speechSynthesis.cancel();
+            stopTTSButton.prop('disabled', true);
         }
     });
 });
